@@ -2,7 +2,7 @@ import * as React from "react";
 import gql from "graphql-tag";
 import { ApolloClient } from "apollo-boost";
 import { Mutation } from "react-apollo";
-import { ApolloError } from 'apollo-client';
+import { ApolloError } from "apollo-client";
 
 interface IProps {
   client: ApolloClient<any>;
@@ -167,8 +167,23 @@ const RepoSearch: React.SFC<IProps> = props => {
           <p>{repo.description}</p>
           <div>
             {!repo.viewerHasStarred && (
-              <Mutation mutation={STAR_REPO} variables={{ repoId: repo.id }}>
-                {(addStar: () => void, { loading, error }: {loading: boolean, error?: ApolloError}) => (
+              <Mutation
+                mutation={STAR_REPO}
+                variables={{ repoId: repo.id }}
+                refetchQueries={[
+                  {
+                    query: GET_REPO,
+                    variables: {
+                      orgName: search.orgName,
+                      repoName: search.repoName
+                    }
+                  }
+                ]}
+              >
+                {(
+                  addStar: () => void,
+                  { loading, error }: { loading: boolean; error?: ApolloError }
+                ) => (
                   <div>
                     <button disabled={loading} onClick={() => addStar()}>
                       {loading ? "Adding ..." : "Star!"}
