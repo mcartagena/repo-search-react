@@ -170,15 +170,38 @@ const RepoSearch: React.SFC<IProps> = props => {
               <Mutation
                 mutation={STAR_REPO}
                 variables={{ repoId: repo.id }}
-                refetchQueries={[
-                  {
+                update={(cache: any) => {
+                  // Get the cached data
+                  const data: { repository: IRepo } | null = cache.readQuery({
                     query: GET_REPO,
                     variables: {
                       orgName: search.orgName,
                       repoName: search.repoName
                     }
+                  });
+                  if (data === null) {
+                    return;
                   }
-                ]}
+                  // update the cached data
+                  const newData = {
+                    ...data.repository,
+                    viewerHasStarred: true,
+                    stargazers: {
+                      ...data.repository.stargazers,
+                      totalCount: data.repository.stargazers.totalCount + 1
+                    }
+                  };
+                  cache.writeQuery({
+                    query: GET_REPO,
+                    variables: {
+                      orgName: search.orgName,
+                      repoName: search.repoName
+                    },
+                    data: { repository: newData }
+                  });                  
+                  // update our state
+                  setRepo(newData);
+                }}
               >
                 {(
                   addStar: () => void,
