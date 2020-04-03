@@ -1,6 +1,8 @@
 import * as React from "react";
 import gql from "graphql-tag";
 import { ApolloClient } from "apollo-boost";
+import { Mutation } from "react-apollo";
+import { ApolloError } from 'apollo-client';
 
 interface IProps {
   client: ApolloClient<any>;
@@ -90,6 +92,18 @@ const RepoSearch: React.SFC<IProps> = props => {
     }
   `;
 
+  const STAR_REPO = gql`
+    mutation($repoId: ID!) {
+      addStar(input: { starrableId: $repoId }) {
+        starrable {
+          stargazers {
+            totalCount
+          }
+        }
+      }
+    }
+  `;
+
   const [repo, setRepo]: [IRepo, (repo: IRepo) => void] = React.useState(
     defaultRepo
   );
@@ -151,6 +165,20 @@ const RepoSearch: React.SFC<IProps> = props => {
               : ""}
           </h4>
           <p>{repo.description}</p>
+          <div>
+            {!repo.viewerHasStarred && (
+              <Mutation mutation={STAR_REPO} variables={{ repoId: repo.id }}>
+                {(addStar: () => void, { loading, error }: {loading: boolean, error?: ApolloError}) => (
+                  <div>
+                    <button disabled={loading} onClick={() => addStar()}>
+                      {loading ? "Adding ..." : "Star!"}
+                    </button>
+                    {error && <div>{error.toString()}</div>}
+                  </div>
+                )}
+              </Mutation>
+            )}
+          </div>
           <div>
             Last 5 issues:
             {repo.issues && repo.issues.edges ? (
